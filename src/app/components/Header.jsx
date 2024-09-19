@@ -1,45 +1,44 @@
 "use client";
+
 import { MainLogo } from "@/public/svg/MainLogo";
 import { PhoneLogo } from "@/public/svg/PhoneLogo";
 import { SearchLogo } from "@/public/svg/SearchLogo";
 import { useState, useCallback } from "react";
 import data from "../mock/us-property-listings-100.json";
-const Header = () => {
+const   Header = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedResults, setSelectedResults] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const filteredCities = data.properties.filter((property) =>
-    property.City.toLowerCase().includes(searchValue.toLowerCase())
-  ); 
+  const [rentType, setRentType] = useState("any");
 
+  const filteredCities = data.properties.filter((property) => {
+    const matchesSearch = property.City.toLowerCase().includes(   
+      searchValue.toLowerCase()
+    );
+    const matchesRentType = 
+      rentType === "any" || property.rentType === rentType;
+    return matchesSearch && matchesRentType;
+  });
   const handleInputChange = useCallback((e) => {
     setSearchValue(e.target.value.trim());
     setShowSuggestions(true);
   }, []);
 
   const handleFilterChange = (event) => {
-    if (event.target.value === "sell") {
-      console.log("sell")
-    } else if(event.target.value==="rent"){
-      console.log("rent")
-    }
+    setRentType(event.target.value);
+    setShowSuggestions(true);
   };
 
-  const handleSuggestionClick = (name) => {
-    if (!selectedResults.includes(name)) {
-      setSelectedResults([...selectedResults, name]);
+  const handleSuggestionClick = (property) => {
+    if (!selectedResults.includes(property.City)) {
+      setSelectedResults((prev) => [...prev, property.City]);
     }
-    setSearchValue("");
-    setShowSuggestions(false);
-  };
-
-  const handleClearSearch = () => {
     setSearchValue("");
     setShowSuggestions(false);
   };
 
   const handleClearTag = (tag) => {
-    setSelectedResults(selectedResults.filter((item) => item !== tag));
+    setSelectedResults((prev) => prev.filter((item) => item !== tag));
   };
 
   const handleBlur = () => {
@@ -48,21 +47,15 @@ const Header = () => {
     }, 100);
   };
 
-  const handleFocus = () => {
-    if (searchValue) {
-      setShowSuggestions(true);
-    }
-  };
 
   return (
     <header className="container m-auto flex items-center gap-5 pt-12">
       <MainLogo />
-      <div className="relative flex min-w-[600px]  border rounded-md h-[50px]">
+      <div className="relative flex min-w-[600px] border rounded-md h-[50px]">
         <div className="flex items-center border-r border-gray-300 px-2">
           <select
-            defaultValue="Any"
+            value={rentType}
             className="bg-white border-none outline-none"
-            aria-label="Property type"
             onChange={handleFilterChange}
           >
             <option value="any">Any</option>
@@ -77,11 +70,10 @@ const Header = () => {
                 key={result}
                 className="bg-yellow-200 text-black px-2 py-1 rounded-md flex items-center gap-1"
               >
-                {result.City}
+                {result}
                 <button
                   onClick={() => handleClearTag(result)}
                   className="text-gray-500"
-                  aria-label={`Remove ${result}`}
                 >
                   ×
                 </button>
@@ -93,23 +85,20 @@ const Header = () => {
               value={searchValue}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              onFocus={handleFocus}
+
               className="flex-1 px-2 py-1 border-none outline-none overflow-x-auto"
-              aria-label="Search"
             />
           </div>
 
           {searchValue && showSuggestions && filteredCities.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10 max-w-[600px]">
-              {filteredCities?.map((name) => (
+            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              {filteredCities.map((property) => (
                 <div
-                  key={name.id}
-                  onClick={() => handleSuggestionClick(name)}
-                  className={`p-2 border-b last:border-b-0 cursor-pointer ${
-                    searchValue === name ? "bg-yellow-200" : "hover:bg-gray-100"
-                  }`}
+                  key={property.id}
+                  onClick={() => handleSuggestionClick(property)}
+                  className="p-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-100"
                 >
-                  {name.City}
+                  {property.City}
                 </div>
               ))}
             </div>
@@ -129,7 +118,7 @@ const Header = () => {
         </div>
         <div className="flex items-center ml-5">
           <div className="w-10 h-10 rounded-full border"></div>
-          <select className="outline-none ml-2" aria-label="Select user">
+          <select className="outline-none ml-2">
             <option value="" disabled selected>
               Choose
             </option>
