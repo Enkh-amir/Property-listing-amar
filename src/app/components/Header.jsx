@@ -3,50 +3,27 @@
 import { MainLogo } from "@/public/svg/MainLogo";
 import { PhoneLogo } from "@/public/svg/PhoneLogo";
 import { SearchLogo } from "@/public/svg/SearchLogo";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import data from "../mock/us-property-listings-100.json";
-const   Header = () => {
+
+const Header = ({
+  onSearch,
+  handleFilterChange,
+  filteredCities,
+  handleSuggestionClick,
+  rentType,
+}) => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedResults, setSelectedResults] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [rentType, setRentType] = useState("any");
-
-  const filteredCities = data.properties.filter((property) => {
-    const matchesSearch = property.City.toLowerCase().includes(   
-      searchValue.toLowerCase()
-    );
-    const matchesRentType = 
-      rentType === "any" || property.rentType === rentType;
-    return matchesSearch && matchesRentType;
-  });
-  const handleInputChange = useCallback((e) => {
-    setSearchValue(e.target.value.trim());
-    setShowSuggestions(true);
-  }, []);
-
-  const handleFilterChange = (event) => {
-    setRentType(event.target.value);
-    setShowSuggestions(true);
-  };
-
-  const handleSuggestionClick = (property) => {
-    if (!selectedResults.includes(property.City)) {
-      setSelectedResults((prev) => [...prev, property.City]);
-    }
-    setSearchValue("");
-    setShowSuggestions(false);
-  };
 
   const handleClearTag = (tag) => {
     setSelectedResults((prev) => prev.filter((item) => item !== tag));
   };
 
   const handleBlur = () => {
-    setTimeout(() => {
-      setShowSuggestions(false);
-    }, 100);
+    setShowSuggestions(false);
   };
-
 
   return (
     <header className="container m-auto flex items-center gap-5 pt-12">
@@ -83,9 +60,12 @@ const   Header = () => {
               type="text"
               placeholder="Search"
               value={searchValue}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                setSearchValue(e.target.value);
+                onSearch(e.target.value);
+                setShowSuggestions(true);
+              }}
               onBlur={handleBlur}
-
               className="flex-1 px-2 py-1 border-none outline-none overflow-x-auto"
             />
           </div>
@@ -97,6 +77,11 @@ const   Header = () => {
                   key={property.id}
                   onClick={() => handleSuggestionClick(property)}
                   className="p-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-100"
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && handleSuggestionClick(property)
+                  }
                 >
                   {property.City}
                 </div>
@@ -119,7 +104,7 @@ const   Header = () => {
         <div className="flex items-center ml-5">
           <div className="w-10 h-10 rounded-full border"></div>
           <select className="outline-none ml-2">
-            <option value="" disabled selected>
+            <option value="" disabled>
               Choose
             </option>
             <option value="Chris Evans">Chris Evans</option>
